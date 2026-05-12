@@ -15,6 +15,7 @@ npm install
 ```env
 DATABASE_URL="postgresql://USER:PASSWORD@HOST/dbname?sslmode=require"
 PORT=3000
+TIME_ZONE=America/Caracas
 ```
 
 3. Crea o sincroniza la tabla en Neon:
@@ -42,12 +43,37 @@ Para desarrollo rapido puedes usar `db:push`. Para cambios versionados usa `db:g
 
 - `GET /health`
 - `GET /classes`
+- `GET /classes/today`
+- `GET /classes/tomorrow`
 - `GET /classes/:id`
 - `POST /classes`
 - `PATCH /classes/:id`
 - `DELETE /classes/:id`
 
 ## Ejemplo
+
+Para consultar las clases de hoy segun la fecha actual en Caracas:
+
+```bash
+curl http://localhost:3000/classes/today
+```
+
+Para consultar las clases de mañana:
+
+```bash
+curl http://localhost:3000/classes/tomorrow
+```
+
+Respuesta:
+
+```json
+{
+  "date": "2026-05-12",
+  "dayOfWeek": "Martes",
+  "timeZone": "America/Caracas",
+  "classes": []
+}
+```
 
 `dayOfWeek` usa el nombre del dia: `Domingo`, `Lunes`, `Martes`, `Miercoles`, `Jueves`, `Viernes` o `Sabado`.
 

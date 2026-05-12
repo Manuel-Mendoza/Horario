@@ -16,6 +16,16 @@ type ClassPayload = {
 const app = new Hono()
 
 const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado']
+const timeZone = process.env.TIME_ZONE ?? 'America/Caracas'
+const weekDayByEnglishName: Record<string, string> = {
+  Sunday: 'Domingo',
+  Monday: 'Lunes',
+  Tuesday: 'Martes',
+  Wednesday: 'Miercoles',
+  Thursday: 'Jueves',
+  Friday: 'Viernes',
+  Saturday: 'Sabado'
+}
 
 const toClassResponse = (row: Record<string, unknown>) => ({
   id: row.id,
@@ -92,6 +102,30 @@ const requiredTime = (value: unknown, field: string) => {
   return parseTime12h(value, field)
 }
 
+const getScheduleDate = (offsetDays = 0) => {
+  const now = new Date(Date.now() + offsetDays * 24 * 60 * 60 * 1000)
+  const dateParts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(now)
+  const weekday = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'long' }).format(now)
+  const year = dateParts.find((part) => part.type === 'year')?.value
+  const month = dateParts.find((part) => part.type === 'month')?.value
+  const day = dateParts.find((part) => part.type === 'day')?.value
+  const dayOfWeek = weekDayByEnglishName[weekday]
+
+  if (!year || !month || !day || !dayOfWeek) {
+    throw new HTTPException(500, { message: 'could not resolve current date' })
+  }
+
+  return {
+    date: `${year}-${month}-${day}`,
+    dayOfWeek
+  }
+}
+
 app.get('/health', (c) => c.json({ ok: true }))
 
 app.get('/classes', async (c) => {
@@ -102,6 +136,40 @@ app.get('/classes', async (c) => {
   `
 
   return c.json(rows.map(toClassResponse))
+})
+
+app.get('/classes/today', async (c) => {
+  const today = getScheduleDate()
+  const rows = await sql`
+    SELECT *
+    FROM class_schedule
+    WHERE day_of_week = ${today.dayOfWeek}
+    ORDER BY start_time
+  `
+
+  return c.json({
+    date: today.date,
+    dayOfWeek: today.dayOfWeek,
+    timeZone,
+    classes: rows.map(toClassResponse)
+  })
+})
+
+app.get('/classes/tomorrow', async (c) => {
+  const tomorrow = getScheduleDate(1)
+  const rows = await sql`
+    SELECT *
+    FROM class_schedule
+    WHERE day_of_week = ${tomorrow.dayOfWeek}
+    ORDER BY start_time
+  `
+
+  return c.json({
+    date: tomorrow.date,
+    dayOfWeek: tomorrow.dayOfWeek,
+    timeZone,
+    classes: rows.map(toClassResponse)
+  })
 })
 
 app.get('/classes/:id', async (c) => {
