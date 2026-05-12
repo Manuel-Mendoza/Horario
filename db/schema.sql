@@ -1,10 +1,8 @@
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
 CREATE TABLE IF NOT EXISTS class_schedule (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  id serial PRIMARY KEY,
   subject text NOT NULL,
   teacher text,
-  day_of_week integer NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
+  day_of_week text NOT NULL CHECK (day_of_week IN ('Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado')),
   start_time time NOT NULL,
   end_time time NOT NULL,
   classroom text,

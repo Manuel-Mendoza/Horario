@@ -15,23 +15,49 @@ type ClassPayload = {
 
 const app = new Hono()
 
-const dayNames = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']
+const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado']
 
 const toClassResponse = (row: Record<string, unknown>) => ({
   id: row.id,
   subject: row.subject,
   teacher: row.teacher,
   dayOfWeek: row.day_of_week,
-  dayName: dayNames[Number(row.day_of_week)],
-  startTime: row.start_time,
-  endTime: row.end_time,
+  startTime: formatTime12h(row.start_time),
+  endTime: formatTime12h(row.end_time),
   classroom: row.classroom,
   notes: row.notes,
   createdAt: row.created_at,
   updatedAt: row.updated_at
 })
 
-const isTime = (value: unknown) => typeof value === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value)
+const time12hRegex = /^(0?[1-9]|1[0-2]):[0-5]\d\s?(AM|PM)$/i
+
+const formatTime12h = (value: unknown) => {
+  if (typeof value !== 'string') return value
+
+  const [hourText, minuteText] = value.split(':')
+  const hour = Number(hourText)
+  const minute = minuteText.slice(0, 2)
+  const period = hour >= 12 ? 'PM' : 'AM'
+  const hour12 = hour % 12 || 12
+
+  return `${hour12.toString().padStart(2, '0')}:${minute} ${period}`
+}
+
+const parseTime12h = (value: unknown, field: string) => {
+  if (typeof value !== 'string' || !time12hRegex.test(value.trim())) {
+    throw new HTTPException(400, { message: `${field} must use hh:mm AM/PM format` })
+  }
+
+  const [, hourText, period] = value.trim().match(time12hRegex) ?? []
+  const minute = value.trim().split(':')[1].slice(0, 2)
+  let hour = Number(hourText)
+
+  if (period.toUpperCase() === 'AM' && hour === 12) hour = 0
+  if (period.toUpperCase() === 'PM' && hour !== 12) hour += 12
+
+  return `${hour.toString().padStart(2, '0')}:${minute}`
+}
 
 const optionalText = (value: unknown, field: string) => {
   if (value === undefined || value === null || value === '') return null
@@ -48,19 +74,22 @@ const requiredText = (value: unknown, field: string) => {
 }
 
 const requiredDay = (value: unknown) => {
-  if (!Number.isInteger(value) || Number(value) < 0 || Number(value) > 6) {
-    throw new HTTPException(400, { message: 'dayOfWeek must be an integer from 0 to 6' })
+  if (typeof value !== 'string') {
+    throw new HTTPException(400, { message: 'dayOfWeek must be a valid day name' })
   }
 
-  return Number(value)
+  const normalized = value.trim().toLowerCase()
+  const day = dayNames.find((dayName) => dayName.toLowerCase() === normalized)
+
+  if (!day) {
+    throw new HTTPException(400, { message: `dayOfWeek must be one of: ${dayNames.join(', ')}` })
+  }
+
+  return day
 }
 
 const requiredTime = (value: unknown, field: string) => {
-  if (!isTime(value)) {
-    throw new HTTPException(400, { message: `${field} must use HH:mm format` })
-  }
-
-  return value
+  return parseTime12h(value, field)
 }
 
 app.get('/health', (c) => c.json({ ok: true }))
@@ -69,7 +98,7 @@ app.get('/classes', async (c) => {
   const rows = await sql`
     SELECT *
     FROM class_schedule
-    ORDER BY day_of_week, start_time
+    ORDER BY array_position(ARRAY['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'], day_of_week), start_time
   `
 
   return c.json(rows.map(toClassResponse))
