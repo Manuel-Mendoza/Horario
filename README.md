@@ -39,9 +39,79 @@ npm run dev
 
 Para desarrollo rapido puedes usar `db:push`. Para cambios versionados usa `db:generate` y luego `db:migrate`.
 
+### Esquema
+
+El modelo esta separado para evitar repetir informacion:
+
+#### `teachers`
+
+Guarda profesores reutilizables.
+
+| Campo | Tipo | Requerido | Descripcion |
+| --- | --- | --- | --- |
+| `id` | `serial` | Si | Identificador del profesor. |
+| `name` | `text` | Si | Nombre del profesor. |
+| `email` | `text` | No | Correo del profesor. |
+| `phone` | `text` | No | Telefono del profesor. |
+| `notes` | `text` | No | Notas del profesor. |
+| `created_at` | `timestamp with time zone` | Si | Fecha de creacion. |
+| `updated_at` | `timestamp with time zone` | Si | Fecha de ultima actualizacion. |
+
+#### `classes`
+
+Guarda la materia o clase base. Puede apuntar a un profesor existente con `teacher_id`.
+
+| Campo | Tipo | Requerido | Descripcion |
+| --- | --- | --- | --- |
+| `id` | `serial` | Si | Identificador de la clase. |
+| `subject` | `text` | Si | Nombre de la materia o clase. |
+| `teacher_id` | `integer` | No | Profesor asignado desde `teachers.id`. |
+| `classroom` | `text` | No | Aula, salon o ubicacion. |
+| `notes` | `text` | No | Notas adicionales. |
+| `created_at` | `timestamp with time zone` | Si | Fecha de creacion. |
+| `updated_at` | `timestamp with time zone` | Si | Fecha de ultima actualizacion. |
+
+#### `class_schedules`
+
+Guarda horarios. Una clase puede tener varios horarios.
+
+| Campo | Tipo | Requerido | Descripcion |
+| --- | --- | --- | --- |
+| `id` | `serial` | Si | Identificador del horario. |
+| `class_id` | `integer` | Si | Clase asociada desde `classes.id`. |
+| `day_of_week` | `text` | Si | Dia de la semana. |
+| `start_time` | `time` | Si | Hora de inicio. |
+| `end_time` | `time` | Si | Hora de cierre. |
+| `created_at` | `timestamp with time zone` | Si | Fecha de creacion. |
+| `updated_at` | `timestamp with time zone` | Si | Fecha de ultima actualizacion. |
+
+#### `evaluations`
+
+Guarda evaluaciones de cada clase. Una clase puede tener muchas evaluaciones.
+
+| Campo | Tipo | Requerido | Descripcion |
+| --- | --- | --- | --- |
+| `id` | `serial` | Si | Identificador de la evaluacion. |
+| `class_id` | `integer` | Si | Clase asociada desde `classes.id`. |
+| `title` | `text` | Si | Nombre de la evaluacion. |
+| `type` | `text` | No | Tipo, por ejemplo parcial, tarea o exposicion. |
+| `due_date` | `date` | No | Fecha de entrega o presentacion. |
+| `grade` | `text` | No | Nota obtenida. |
+| `max_grade` | `text` | No | Nota maxima. |
+| `notes` | `text` | No | Detalles adicionales. |
+| `created_at` | `timestamp with time zone` | Si | Fecha de creacion. |
+| `updated_at` | `timestamp with time zone` | Si | Fecha de ultima actualizacion. |
+
+`day_of_week` acepta: `Domingo`, `Lunes`, `Martes`, `Miercoles`, `Jueves`, `Viernes` o `Sabado`.
+
+`start_time` debe ser menor que `end_time`.
+
 ## Endpoints
 
 - `GET /health`
+- `GET /teachers`
+- `POST /teachers`
+- `PATCH /teachers/:id`
 - `GET /classes`
 - `GET /classes/today`
 - `GET /classes/tomorrow`
@@ -49,6 +119,12 @@ Para desarrollo rapido puedes usar `db:push`. Para cambios versionados usa `db:g
 - `POST /classes`
 - `PATCH /classes/:id`
 - `DELETE /classes/:id`
+- `POST /classes/:id/schedules`
+- `PATCH /schedules/:id`
+- `DELETE /schedules/:id`
+- `POST /classes/:id/evaluations`
+- `PATCH /evaluations/:id`
+- `DELETE /evaluations/:id`
 
 ## Ejemplo
 
@@ -90,5 +166,34 @@ curl -X POST http://localhost:3000/classes \
     "endTime": "09:30 AM",
     "classroom": "A-101",
     "notes": "Traer calculadora"
+  }'
+```
+
+Si el profesor ya existe, tambien puedes usar `teacherId` en lugar de `teacher`.
+
+Para agregar otro horario a la misma clase:
+
+```bash
+curl -X POST http://localhost:3000/classes/1/schedules \
+  -H "Content-Type: application/json" \
+  -d '{
+    "dayOfWeek": "Miercoles",
+    "startTime": "08:00 AM",
+    "endTime": "09:30 AM"
+  }'
+```
+
+Para agregar una evaluacion:
+
+```bash
+curl -X POST http://localhost:3000/classes/1/evaluations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Parcial 1",
+    "type": "Parcial",
+    "dueDate": "2026-05-22",
+    "grade": "18",
+    "maxGrade": "20",
+    "notes": "Tema: derivadas"
   }'
 ```
