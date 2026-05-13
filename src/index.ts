@@ -28,6 +28,7 @@ type SchedulePayload = {
 }
 
 type EvaluationPayload = {
+  subject?: unknown
   title?: unknown
   type?: unknown
   dueDate?: unknown
@@ -264,6 +265,39 @@ const resolveTeacherId = async (body: Pick<ClassPayload, 'teacherId' | 'teacher'
   return currentTeacherId
 }
 
+const getClassIdBySubject = async (value: unknown) => {
+  const subject = requiredText(value, 'subject')
+  const rows = await sql`
+    SELECT id, subject
+    FROM classes
+    WHERE lower(subject) = lower(${subject})
+    ORDER BY id
+  `
+
+  if (rows.length === 0) throw new HTTPException(404, { message: 'class subject not found' })
+  if (rows.length > 1) {
+    throw new HTTPException(409, { message: `multiple classes found for subject ${subject}` })
+  }
+
+  return rows[0].id
+}
+
+const createEvaluation = async (classId: unknown, body: EvaluationPayload) => {
+  const title = requiredText(body.title, 'title')
+  const type = optionalText(body.type, 'type')
+  const dueDate = optionalDate(body.dueDate, 'dueDate')
+  const grade = optionalText(body.grade, 'grade')
+  const maxGrade = optionalText(body.maxGrade, 'maxGrade')
+  const notes = optionalText(body.notes, 'notes')
+  const [row] = await sql`
+    INSERT INTO evaluations (class_id, title, type, due_date, grade, max_grade, notes)
+    VALUES (${classId}, ${title}, ${type}, ${dueDate}, ${grade}, ${maxGrade}, ${notes})
+    RETURNING *
+  `
+
+  return toEvaluationResponse(row)
+}
+
 app.get('/health', (c) => c.json({ ok: true }))
 
 app.get('/teachers', async (c) => {
@@ -471,19 +505,14 @@ app.post('/classes/:id/evaluations', async (c) => {
 
   if (!classRow) throw new HTTPException(404, { message: 'class not found' })
 
-  const title = requiredText(body.title, 'title')
-  const type = optionalText(body.type, 'type')
-  const dueDate = optionalDate(body.dueDate, 'dueDate')
-  const grade = optionalText(body.grade, 'grade')
-  const maxGrade = optionalText(body.maxGrade, 'maxGrade')
-  const notes = optionalText(body.notes, 'notes')
-  const [row] = await sql`
-    INSERT INTO evaluations (class_id, title, type, due_date, grade, max_grade, notes)
-    VALUES (${c.req.param('id')}, ${title}, ${type}, ${dueDate}, ${grade}, ${maxGrade}, ${notes})
-    RETURNING *
-  `
+  return c.json(await createEvaluation(c.req.param('id'), body), 201)
+})
 
-  return c.json(toEvaluationResponse(row), 201)
+app.post('/evaluations', async (c) => {
+  const body = await c.req.json<EvaluationPayload>()
+  const classId = await getClassIdBySubject(body.subject)
+
+  return c.json(await createEvaluation(classId, body), 201)
 })
 
 app.patch('/evaluations/:id', async (c) => {

@@ -122,6 +122,7 @@ Guarda evaluaciones de cada clase. Una clase puede tener muchas evaluaciones.
 - `POST /classes/:id/schedules`
 - `PATCH /schedules/:id`
 - `DELETE /schedules/:id`
+- `POST /evaluations`
 - `POST /classes/:id/evaluations`
 - `PATCH /evaluations/:id`
 - `DELETE /evaluations/:id`
@@ -215,9 +216,28 @@ curl -X POST http://localhost:3000/classes/1/schedules \
   }'
 ```
 
-### Crear Evaluacion
+### Crear Evaluacion Por Materia
 
-Inserta una fila en `evaluations` para una clase existente.
+Inserta una fila en `evaluations` buscando la clase por `subject`.
+
+```bash
+curl -X POST http://localhost:3000/evaluations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subject": "Hardware",
+    "title": "Infografia",
+    "type": "Exposicion",
+    "dueDate": "2026-05-14",
+    "maxGrade": "20",
+    "notes": "Tema: Deteccion de fallas y problemas del hardware y software"
+  }'
+```
+
+Si hay varias clases con el mismo `subject`, la API responde `409` para evitar guardar la evaluacion en la clase equivocada.
+
+### Crear Evaluacion Por ID
+
+Inserta una fila en `evaluations` para una clase existente usando `classes.id`.
 
 ```bash
 curl -X POST http://localhost:3000/classes/1/evaluations \
