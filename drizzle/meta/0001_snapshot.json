@@ -113,11 +113,11 @@
       "checkConstraints": {
         "class_schedule_day_of_week_check": {
           "name": "class_schedule_day_of_week_check",
-          "value": "\"class_schedule\".\"day_of_week\" IN ('Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado')"
+          "value": "\"day_of_week\" IN ('Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado')"
         },
         "class_schedule_time_check": {
           "name": "class_schedule_time_check",
-          "value": "\"class_schedule\".\"start_time\" < \"class_schedule\".\"end_time\""
+          "value": "\"start_time\" < \"end_time\""
         }
       },
       "isRLSEnabled": false

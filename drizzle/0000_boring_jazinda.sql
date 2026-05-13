@@ -9,8 +9,8 @@ CREATE TABLE "class_schedule" (
 	"notes" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "class_schedule_day_of_week_check" CHECK ("class_schedule"."day_of_week" IN ('Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado')),
-	CONSTRAINT "class_schedule_time_check" CHECK ("class_schedule"."start_time" < "class_schedule"."end_time")
+	CONSTRAINT "class_schedule_day_of_week_check" CHECK ("day_of_week" IN ('Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado')),
+	CONSTRAINT "class_schedule_time_check" CHECK ("start_time" < "end_time")
 );
 --> statement-breakpoint
 CREATE INDEX "class_schedule_day_time_idx" ON "class_schedule" USING btree ("day_of_week","start_time");

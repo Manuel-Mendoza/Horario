@@ -27,8 +27,8 @@ CREATE TABLE "class_schedules" (
 	"end_time" time NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "class_schedules_day_of_week_check" CHECK ("class_schedules"."day_of_week" IN ('Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado')),
-	CONSTRAINT "class_schedules_time_check" CHECK ("class_schedules"."start_time" < "class_schedules"."end_time")
+	CONSTRAINT "class_schedules_day_of_week_check" CHECK ("day_of_week" IN ('Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado')),
+	CONSTRAINT "class_schedules_time_check" CHECK ("start_time" < "end_time")
 );
 --> statement-breakpoint
 CREATE TABLE "evaluations" (

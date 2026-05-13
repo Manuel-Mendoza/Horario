@@ -45,9 +45,9 @@ export const classSchedules = pgTable(
   (table) => [
     check(
       'class_schedules_day_of_week_check',
-      sql`${table.dayOfWeek} IN ('Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado')`
+      sql.raw('"day_of_week" IN (\'Domingo\', \'Lunes\', \'Martes\', \'Miercoles\', \'Jueves\', \'Viernes\', \'Sabado\')')
     ),
-    check('class_schedules_time_check', sql`${table.startTime} < ${table.endTime}`),
+    check('class_schedules_time_check', sql.raw('"start_time" < "end_time"')),
     index('class_schedules_class_idx').on(table.classId),
     index('class_schedules_day_time_idx').on(table.dayOfWeek, table.startTime)
   ]
