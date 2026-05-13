@@ -201,12 +201,19 @@ const getClassRow = async (id: unknown) => {
   return row
 }
 
-const getClassResponse = async (id: unknown) => {
+const getClassResponse = async (id: unknown, scheduleDayOfWeek?: string) => {
   const row = await getClassRow(id)
 
   if (!row) throw new HTTPException(404, { message: 'class not found' })
 
-  const schedules = await sql`
+  const schedules = scheduleDayOfWeek
+    ? await sql`
+    SELECT *
+    FROM class_schedules
+    WHERE class_id = ${id} AND day_of_week = ${scheduleDayOfWeek}
+    ORDER BY start_time
+  `
+    : await sql`
     SELECT *
     FROM class_schedules
     WHERE class_id = ${id}
@@ -316,36 +323,38 @@ app.get('/classes', async (c) => {
 app.get('/classes/today', async (c) => {
   const today = getScheduleDate()
   const rows = await sql`
-    SELECT DISTINCT c.id
+    SELECT c.id
     FROM classes c
     INNER JOIN class_schedules s ON s.class_id = c.id
     WHERE s.day_of_week = ${today.dayOfWeek}
-    ORDER BY c.id
+    GROUP BY c.id
+    ORDER BY min(s.start_time), c.subject
   `
 
   return c.json({
     date: today.date,
     dayOfWeek: today.dayOfWeek,
     timeZone,
-    classes: await Promise.all(rows.map((row) => getClassResponse(row.id)))
+    classes: await Promise.all(rows.map((row) => getClassResponse(row.id, today.dayOfWeek)))
   })
 })
 
 app.get('/classes/tomorrow', async (c) => {
   const tomorrow = getScheduleDate(1)
   const rows = await sql`
-    SELECT DISTINCT c.id
+    SELECT c.id
     FROM classes c
     INNER JOIN class_schedules s ON s.class_id = c.id
     WHERE s.day_of_week = ${tomorrow.dayOfWeek}
-    ORDER BY c.id
+    GROUP BY c.id
+    ORDER BY min(s.start_time), c.subject
   `
 
   return c.json({
     date: tomorrow.date,
     dayOfWeek: tomorrow.dayOfWeek,
     timeZone,
-    classes: await Promise.all(rows.map((row) => getClassResponse(row.id)))
+    classes: await Promise.all(rows.map((row) => getClassResponse(row.id, tomorrow.dayOfWeek)))
   })
 })
 
