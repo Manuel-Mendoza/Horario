@@ -126,7 +126,7 @@ Guarda evaluaciones de cada clase. Una clase puede tener muchas evaluaciones.
 - `PATCH /evaluations/:id`
 - `DELETE /evaluations/:id`
 
-## Ejemplo
+## Ejemplos
 
 Para consultar las clases de hoy segun la fecha actual en Caracas:
 
@@ -155,6 +155,25 @@ Respuesta:
 
 `startTime` y `endTime` usan formato 12h con AM/PM, por ejemplo `08:00 AM` o `01:30 PM`.
 
+### POST `/teachers` - Crear Profesor
+
+Inserta una fila en `teachers`.
+
+```bash
+curl -X POST http://localhost:3000/teachers \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Profe Garcia",
+    "email": "garcia@example.com",
+    "phone": "+58 412-0000000",
+    "notes": "Disponible despues de clases"
+  }'
+```
+
+### Crear Clase
+
+Inserta una fila en `classes`. Tambien puede crear o reutilizar el profesor si envias `teacher`.
+
 ```bash
 curl -X POST http://localhost:3000/classes \
   -H "Content-Type: application/json" \
@@ -171,7 +190,20 @@ curl -X POST http://localhost:3000/classes \
 
 Si el profesor ya existe, tambien puedes usar `teacherId` en lugar de `teacher`.
 
-Para agregar otro horario a la misma clase:
+```bash
+curl -X POST http://localhost:3000/classes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subject": "Fisica",
+    "teacherId": 1,
+    "classroom": "B-204",
+    "notes": "Laboratorio los viernes"
+  }'
+```
+
+### Crear Horario
+
+Inserta una fila en `class_schedules` para una clase existente.
 
 ```bash
 curl -X POST http://localhost:3000/classes/1/schedules \
@@ -183,7 +215,9 @@ curl -X POST http://localhost:3000/classes/1/schedules \
   }'
 ```
 
-Para agregar una evaluacion:
+### Crear Evaluacion
+
+Inserta una fila en `evaluations` para una clase existente.
 
 ```bash
 curl -X POST http://localhost:3000/classes/1/evaluations \
