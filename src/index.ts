@@ -33,7 +33,6 @@ type EvaluationPayload = {
   type?: unknown
   dueDate?: unknown
   grade?: unknown
-  maxGrade?: unknown
   notes?: unknown
 }
 
@@ -185,7 +184,6 @@ const toEvaluationResponse = (row: Record<string, unknown>) => ({
   type: row.type,
   dueDate: row.due_date,
   grade: row.grade,
-  maxGrade: row.max_grade,
   notes: row.notes,
   createdAt: row.created_at,
   updatedAt: row.updated_at
@@ -287,11 +285,10 @@ const createEvaluation = async (classId: unknown, body: EvaluationPayload) => {
   const type = optionalText(body.type, 'type')
   const dueDate = optionalDate(body.dueDate, 'dueDate')
   const grade = optionalText(body.grade, 'grade')
-  const maxGrade = optionalText(body.maxGrade, 'maxGrade')
   const notes = optionalText(body.notes, 'notes')
   const [row] = await sql`
-    INSERT INTO evaluations (class_id, title, type, due_date, grade, max_grade, notes)
-    VALUES (${classId}, ${title}, ${type}, ${dueDate}, ${grade}, ${maxGrade}, ${notes})
+    INSERT INTO evaluations (class_id, title, type, due_date, grade, notes)
+    VALUES (${classId}, ${title}, ${type}, ${dueDate}, ${grade}, ${notes})
     RETURNING *
   `
 
@@ -525,11 +522,10 @@ app.patch('/evaluations/:id', async (c) => {
   const type = body.type === undefined ? current.type : optionalText(body.type, 'type')
   const dueDate = body.dueDate === undefined ? current.due_date : optionalDate(body.dueDate, 'dueDate')
   const grade = body.grade === undefined ? current.grade : optionalText(body.grade, 'grade')
-  const maxGrade = body.maxGrade === undefined ? current.max_grade : optionalText(body.maxGrade, 'maxGrade')
   const notes = body.notes === undefined ? current.notes : optionalText(body.notes, 'notes')
   const [row] = await sql`
     UPDATE evaluations
-    SET title = ${title}, type = ${type}, due_date = ${dueDate}, grade = ${grade}, max_grade = ${maxGrade}, notes = ${notes}, updated_at = now()
+    SET title = ${title}, type = ${type}, due_date = ${dueDate}, grade = ${grade}, notes = ${notes}, updated_at = now()
     WHERE id = ${c.req.param('id')}
     RETURNING *
   `

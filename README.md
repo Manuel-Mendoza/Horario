@@ -97,7 +97,6 @@ Guarda evaluaciones de cada clase. Una clase puede tener muchas evaluaciones.
 | `type` | `text` | No | Tipo, por ejemplo parcial, tarea o exposicion. |
 | `due_date` | `date` | No | Fecha de entrega o presentacion. |
 | `grade` | `text` | No | Nota obtenida. |
-| `max_grade` | `text` | No | Nota maxima. |
 | `notes` | `text` | No | Detalles adicionales. |
 | `created_at` | `timestamp with time zone` | Si | Fecha de creacion. |
 | `updated_at` | `timestamp with time zone` | Si | Fecha de ultima actualizacion. |
@@ -228,7 +227,6 @@ curl -X POST http://localhost:3000/evaluations \
     "title": "Infografia",
     "type": "Exposicion",
     "dueDate": "2026-05-14",
-    "maxGrade": "20",
     "notes": "Tema: Deteccion de fallas y problemas del hardware y software"
   }'
 ```
@@ -247,7 +245,6 @@ curl -X POST http://localhost:3000/classes/1/evaluations \
     "type": "Parcial",
     "dueDate": "2026-05-22",
     "grade": "18",
-    "maxGrade": "20",
     "notes": "Tema: derivadas"
   }'
 ```

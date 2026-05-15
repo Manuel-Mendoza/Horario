@@ -64,7 +64,6 @@ export const evaluations = pgTable(
     type: text('type'),
     dueDate: date('due_date'),
     grade: text('grade'),
-    maxGrade: text('max_grade'),
     notes: text('notes'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
